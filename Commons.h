@@ -213,6 +213,7 @@ struct PatchCtrls
     float oscUseWavetable;
 
     float filterVol;
+    float filterDrive;
     float filterMode;
     float filterNoiseLevel;
     float filterCutoff;

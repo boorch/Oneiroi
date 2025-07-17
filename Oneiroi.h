@@ -203,6 +203,36 @@ public:
         {
             filter_->process(buffer, buffer);
         }
+        
+        // Apply independent distortion stage before echo (regardless of filter position)
+        if (patchCtrls_->filterDrive > 0.001f)
+        {
+            size_t size = buffer.getSize();
+            FloatArray leftSamples = buffer.getSamples(LEFT_CHANNEL);
+            FloatArray rightSamples = buffer.getSamples(RIGHT_CHANNEL);
+            
+            // Use filter's drive scaling approach but slightly reduced: 0-100% fader = 0-0.5% drive
+            float mappedDrive = patchCtrls_->filterDrive * 0.005f;
+            
+            // Use proper amp gain like the filter (but reasonable level)
+            float ampGain = 500.f; // Good amp-style distortion level
+            
+            for (size_t i = 0; i < size; i++)
+            {
+                float lIn = Clamp(leftSamples[i], -3.f, 3.f);
+                float rIn = Clamp(rightSamples[i], -3.f, 3.f);
+                
+                // Apply massive gain and soft clip (like filter does)
+                float lDriven = SoftClip(lIn * ampGain);
+                float rDriven = SoftClip(rIn * ampGain);
+                
+                // Crossfade between clean and heavily driven signal (filter's approach)
+                // Small drive amount controls how much of the saturated signal we get
+                leftSamples[i] = LinearCrossFade(lIn, lDriven, mappedDrive);
+                rightSamples[i] = LinearCrossFade(rIn, rDriven, mappedDrive);
+            }
+        }
+        
         echo_->process(buffer, buffer);
         if (FilterPosition::POSITION_3 == filterPosition_)
         {

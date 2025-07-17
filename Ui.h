@@ -182,6 +182,7 @@ public:
         octave_ = 1.f / 8.f * lastOctave_;
         unison_ = 0.55f; // Center is not 0.5
         patchCtrls_->filterMode = 0.f;
+        patchCtrls_->filterDrive = 0.f;
         patchCtrls_->filterPosition = 0.f;
         patchCtrls_->modType = 0.f;
         patchCtrls_->resonatorDissonance = 0.f;
@@ -224,7 +225,7 @@ public:
         faders_[PARAM_FADER_OSC2_VOL] =
             FaderController::create(patchState_, &osc2Vol_);
         faders_[PARAM_FADER_FILTER_VOL] =
-            FaderController::create(patchState_, &patchCtrls_->filterVol);
+            FaderController::create(patchState_, &patchCtrls_->filterVol, &patchCtrls_->filterDrive);
         faders_[PARAM_FADER_RESONATOR_VOL] =
             FaderController::create(patchState_, &patchCtrls_->resonatorVol);
         faders_[PARAM_FADER_ECHO_VOL] =
@@ -998,6 +999,9 @@ public:
 
             for (size_t i = 0; i < PARAM_KNOB_LAST; i++) {
                 knobs_[i]->SetFuncMode(patchState_->funcMode);
+            }
+            for (size_t i = 0; i < PARAM_FADER_LAST; i++) {
+                faders_[i]->SetFuncMode(patchState_->funcMode);
             }
             recordButton_->SetFuncMode(patchState_->funcMode);
             randomButton_->SetFuncMode(patchState_->funcMode);

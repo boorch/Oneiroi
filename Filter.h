@@ -275,7 +275,13 @@ private:
     {
         resoValue_ = Clamp(value);
         reso_ = VariableCrossFade(0.5f, 10.f, value, 0.9f);
-        drive_ = VariableCrossFade(0.f, 0.02f, value, 0.15f, 0.9f);
+        
+        // Calculate resonance-based drive (original behavior)
+        float resoDrive = VariableCrossFade(0.f, 0.02f, value, 0.15f, 0.9f);
+        
+        // Use only resonance-based drive (original behavior)
+        drive_ = resoDrive;
+        
         noiseLevel_ = VariableCrossFade(0.f, 0.1f, value, 0.15f, 0.9f);
     }
 
