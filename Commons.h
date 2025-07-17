@@ -11,7 +11,7 @@
 #define MAX_PATCH_SETTINGS 16 // Max number of available MIDI channels
 #define PATCH_SETTINGS_NAME "oneiroi"
 #define PATCH_VERSION_MAJOR 1
-#define PATCH_VERSION_MINOR 1
+#define PATCH_VERSION_MINOR 2
 
 // Taken from pichenettes' stmlib.
 #define CONSTRAIN(var, min, max) \
@@ -74,7 +74,7 @@ constexpr float kOscFreqMax = 8219.f; // C9
 
 constexpr size_t kLooperInterpolationBlocks = 4; // This number * block size = samples
 constexpr int kLooperLoopLengthMin = 367; // Almost C3 (48000 / 130.81f)
-constexpr int kLooperFadeSamples = 2400; // 50ms @ audio rate
+constexpr int kLooperFadeSamples = 24000; // 500ms @ audio rate
 static const float kLooperFadeSamplesR = 1.f / kLooperFadeSamples;
 constexpr int kLooperTriggerFadeSamples = 240; // 5ms @ audio rate
 static const float kLooperTriggerFadeSamplesR = 1.f / kLooperTriggerFadeSamples;
