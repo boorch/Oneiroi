@@ -106,3 +106,44 @@ The [RECORD] button should light up red indicating you are in Calibration Mode.
   7- Push [MOD AMT] button to exit calibration mode.
 
 
+## Mods Introduced With This Fork
+
+### Independent Distortion Stage
+
+An additional distortion stage has been added to the signal path, positioned right before the echo. This provides amp-like saturation independent of the filter's built-in drive.
+
+**Control:** SHIFT + Filter fader controls distortion amount
+- **Range:** 0-100% fader position = 0-0.5% drive amount  
+- **Character:** Soft-clipping saturation with proper gain staging
+- **Signal Path:** Applied regardless of filter position in the chain
+- **Gain Staging:** Uses 500x amplification with soft clipping, then crossfades with clean signal
+
+The distortion is designed to provide musical, amp-style saturation that enhances the signal without excessive loudness. The scaling is intentionally subtle (0.5% maximum drive) to maintain musical usability across the full fader range.
+
+**Technical Details:**
+- Input clamping: ±3V to prevent excessive drive
+- Saturation function: SoftClip() for smooth harmonic distortion  
+- Crossfade approach: LinearCrossFade() between clean and driven signals
+- Volume compensation: Carefully tuned to maintain consistent perceived loudness
+
+### Planned: Granular Synthesis Mode
+
+A complete granular synthesis engine is planned for addition, utilizing knobs that currently have no SHIFT functionality. This will provide Clouds-style granular processing using the looper buffer as the grain source.
+
+**Proposed Control Mapping (SHIFT + knob for knobs without existing SHIFT functions):**
+- **SHIFT + LOOPER_SPEED** → Grain Pitch/Speed (-2 to +2 octaves)
+- **SHIFT + RESONATOR_FEEDBACK** → Grain Density (grain overlap and timing randomization)
+- **SHIFT + ECHO_REPEATS** → Grain Size (duration of individual grains)
+- **SHIFT + AMBIENCE_DECAY** → Grain Texture (envelope shape: triangle to Hann window)
+- **SHIFT + MOD_LEVEL** → Granular Dry/Wet Mix
+
+**Grain Characteristics:**
+- **Max Grains:** 16 simultaneous grains (optimized for OWL platform performance)
+- **Envelope:** Symmetric triangular attack/decay (no sustain phase)
+- **Window Shaping:** Low texture = sharp triangular envelope, high texture = smooth Hann window
+- **Timing:** Low density = deterministic grain scheduling, high density = probabilistic/random timing
+- **Position:** Controlled by looper playback position and optional scatter at high texture values
+
+**Mode Toggle:** SHIFT + MOD_CV_BUTTON to enable/disable granular mode
+**Grain Source:** Uses existing looper buffer for granular material
+**Compatibility:** When granular mode is off, all controls function normally
