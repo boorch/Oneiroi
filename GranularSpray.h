@@ -8,13 +8,14 @@
 
 struct SprayGrain {
     bool active;
-    float phase;        // 0-1 through grain duration
-    float startPos;     // Position in looper buffer (normalized 0-1)
+    float phase;        // 0-1 through grain duration (for envelope)
+    float startPos;     // Starting position in looper buffer (normalized 0-1)
+    float readPos;      // Current read position in buffer (normalized 0-1) 
     float duration;     // Grain duration in samples
     float pitchShift;   // Pitch multiplier: 0.25x, 0.5x, 1x, 2x, or 4x ONLY
     float amplitude;    // Grain volume
     
-    SprayGrain() : active(false), phase(0), startPos(0), duration(1024), pitchShift(1.0f), amplitude(0.5f) {}
+    SprayGrain() : active(false), phase(0), startPos(0), readPos(0), duration(1024), pitchShift(1.0f), amplitude(0.5f) {}
 };
 
 class GranularSpray {
@@ -32,20 +33,42 @@ private:
     float looperLength_;        // Current looper length
     float looperStart_;         // Current looper start
     
-    // Hermann-style envelope (quick attack, slow decay)
-    float getHermannEnvelope(float phase) {
-        if (phase < 0.1f) {
-            // Quick attack: 0 to 1 in first 10%
-            return phase * 10.0f;
+    // Hermann-style envelope with variable attack/decay ratio
+    float getHermannEnvelope(float phase, float envelopeShape) {
+        // envelopeShape: 0.0 = slow attack/fast decay, 0.5 = equal A/D, 1.0 = fast attack/slow decay
+        
+        // Make the envelope shape control VERY dramatic and obvious
+        float attackPortion;
+        
+        if (envelopeShape <= 0.5f) {
+            // 0.0 to 0.5: longer attack, shorter decay
+            // At 0.0: attack = 95%, decay = 5% (very slow attack)
+            // At 0.5: attack = 50%, decay = 50%
+            attackPortion = 0.5f + (0.5f - envelopeShape) * 0.9f; // 0.5 -> 0.95
         } else {
-            // Slow decay: 1 to 0 over remaining 90%
-            return 1.0f - ((phase - 0.1f) / 0.9f);
+            // 0.5 to 1.0: shorter attack, longer decay  
+            // At 0.5: attack = 50%, decay = 50%
+            // At 1.0: attack = 5%, decay = 95% (very fast attack)
+            attackPortion = 0.5f - (envelopeShape - 0.5f) * 0.9f; // 0.5 -> 0.05
+        }
+        
+        if (phase < attackPortion) {
+            // Attack phase
+            return phase / attackPortion;
+        } else {
+            // Decay phase
+            float decayPortion = 1.0f - attackPortion;
+            return 1.0f - ((phase - attackPortion) / decayPortion);
         }
     }
     
-    // Get one of exactly 5 pitch values based on pitch control
+    // Get one of exactly 5 pitch values based on pitch control, RELATIVE to current looper speed
     float getPitchShift(float pitchControl) {
-        // Always return exactly one of these 5 values: 0.25x, 0.5x, 1x, 2x, 4x
+        // Get current looper varispeed (this is the base speed)
+        float looperSpeed = patchCtrls_->looperSpeed; // 0.5 = half speed, 1.0 = normal, 2.0 = double speed
+        
+        // Always return exactly one of these 5 values: -2oct, -1oct, normal, +1oct, +2oct
+        // But these are RELATIVE to the current looper speed (additive in octave space)
         
         // Calculate weights for each pitch based on control position
         float weights[5] = {0, 0, 0, 0, 0}; // -2oct, -1oct, normal, +1oct, +2oct
@@ -108,17 +131,23 @@ private:
         if (totalWeight > 0) {
             float random = (rand() / (float)RAND_MAX) * totalWeight;
             float cumulative = 0;
-            float pitches[5] = {0.25f, 0.5f, 1.0f, 2.0f, 4.0f};
+            
+            // Octave offsets RELATIVE to current looper speed (additive in octave space)
+            float octaveOffsets[5] = {-2.0f, -1.0f, 0.0f, +1.0f, +2.0f}; // -2oct, -1oct, normal, +1oct, +2oct
             
             for (int i = 0; i < 5; i++) {
                 cumulative += weights[i];
                 if (random <= cumulative) {
-                    return pitches[i];
+                    // Convert octave offset to pitch multiplier relative to looper speed
+                    // If looper is at 2x and we want +1 octave grain, result should be 2x * 2^1 = 4x
+                    float octaveOffset = octaveOffsets[i];
+                    float pitchMultiplier = looperSpeed * powf(2.0f, octaveOffset);
+                    return pitchMultiplier;
                 }
             }
         }
         
-        return 1.0f; // Fallback to normal pitch
+        return looperSpeed; // Fallback to same speed as looper
     }
     
 public:
@@ -152,15 +181,11 @@ public:
                 grain.active = true;
                 grain.phase = 0.0f;
                 
-                // Grain size based ONLY on granularGrainSize control (SHIFT + echo repeats)
-                float grainSizeControl = patchCtrls_->granularGrainSize; // 0-1
-                float minSize = 0.05f;  // 5% of buffer (larger minimum to prevent pitch artifacts)
-                float maxSize = 0.3f;   // 30% of buffer (increased maximum for more variety)
-                float grainSizeRatio = minSize + grainSizeControl * (maxSize - minSize);
+                // FIXED grain duration in samples - completely independent of looper length!
+                // This ensures pitch is never affected by looper length
+                grain.duration = patchState_->sampleRate * 0.2f; // Fixed 200ms grains always
                 
-                // Convert to time in seconds, then to samples
-                float grainTimeSeconds = grainSizeRatio * looperLength_;
-                grain.duration = patchState_->sampleRate * grainTimeSeconds;
+                // Grain duration is NEVER affected by looper length or any controls
                 
                 // Spray position: sprayAmount controls how far grains can be from current position
                 float sprayRange = sprayAmount * 0.4f; // Max 40% of buffer length away from current pos
@@ -170,6 +195,9 @@ public:
                 // Wrap around [0, 1] bounds
                 while (grain.startPos < 0) grain.startPos += 1.0f;
                 while (grain.startPos >= 1.0f) grain.startPos -= 1.0f;
+                
+                // Initialize read position to start position
+                grain.readPos = grain.startPos;
                 
                 // Pitch shift: ONLY 5 discrete values, controlled ONLY by granularPitch (SHIFT + varispeed)
                 // This is set once when grain is created and NEVER changes during grain lifetime
@@ -197,9 +225,10 @@ public:
             float dryLeft = left[i];
             float dryRight = right[i];
             
-            // Trigger grains: spray amount controls density (higher = more frequent grains)
+            // Trigger grains: spray amount controls density, but limit frequency to prevent crackling
             grainTimer_ += 1.0f;
-            float grainInterval = patchState_->sampleRate * (0.05f + (1.0f - sprayAmount) * 0.2f); // 50-250ms intervals
+            // Longer intervals to reduce CPU load: 100-400ms intervals instead of 50-250ms
+            float grainInterval = patchState_->sampleRate * (0.1f + (1.0f - sprayAmount) * 0.3f); // 100-400ms intervals
             
             if (grainTimer_ >= grainInterval) {
                 TriggerGrain();
@@ -213,17 +242,26 @@ public:
                 SprayGrain& grain = grains_[g];
                 if (!grain.active) continue;
                 
-                // Hermann-style envelope (quick attack, slow decay)
-                float envelope = getHermannEnvelope(grain.phase);
+                // ENVELOPE SHAPE CONTROL: granularGrainSize (SHIFT + Echo Repeats) ONLY affects envelope
+                // This has NO EFFECT on grain size, pitch, or anything else - ONLY envelope A/D ratio
+                float envelopeShape = patchCtrls_->granularGrainSize; // 0=slow attack, 1=fast attack
+                float envelope = getHermannEnvelope(grain.phase, envelopeShape);
                 
-                // Calculate read position: grain pitch is FIXED and only affects playback speed
-                // No continuous calculation - pitch was set once at grain creation
-                float readAdvance = grain.phase * grain.pitchShift * 0.05f; // Slow grain playback
-                float normalizedRead = grain.startPos + readAdvance;
+                // Advance read position based on pitch shift
+                // This is the KEY to proper pitch shifting:
+                // pitchShift = 1.0: advance 1 sample per output sample (normal pitch)
+                // pitchShift = 2.0: advance 2 samples per output sample (+1 octave)  
+                // pitchShift = 0.5: advance 0.5 samples per output sample (-1 octave)
+                float samplesPerOutputSample = grain.pitchShift;
+                float normalizedAdvance = samplesPerOutputSample / (looperBuffer_->getSize() / 2); // Convert to normalized 0-1 range
+                grain.readPos += normalizedAdvance;
                 
-                // Wrap around buffer bounds
-                while (normalizedRead < 0) normalizedRead += 1.0f;
-                while (normalizedRead >= 1.0f) normalizedRead -= 1.0f;
+                // Wrap read position around buffer bounds  
+                while (grain.readPos < 0) grain.readPos += 1.0f;
+                while (grain.readPos >= 1.0f) grain.readPos -= 1.0f;
+                
+                // Use current read position for sample lookup
+                float normalizedRead = grain.readPos;
                 
                 // Convert to actual buffer position (stereo interleaved)
                 size_t bufferSize = looperBuffer_->getSize();

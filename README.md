@@ -155,7 +155,7 @@ A simple granular spray enhancement to the existing looper, preserving all origi
 **Control Mapping:**
 - **SHIFT + Resonator Feedback** → Granular Spray Amount (controls grain density and position spread)
 - **SHIFT + Looper Speed** → Pitch Variation (gradual introduction of octave shifts around center)
-- **SHIFT + Echo Repeats** → Grain Size (5-30% of loop buffer length)
+- **SHIFT + Echo Repeats** → Envelope Shape (attack/decay ratio: 0=slow attack, 1=fast attack)
 - **SHIFT + Looper Volume** → Granular Dry/Wet Mix (0 = dry only, 1 = wet only)
 
 **Pitch Variation Details:**
@@ -167,15 +167,15 @@ A simple granular spray enhancement to the existing looper, preserving all origi
 
 **Technical Details:**
 - Exactly 5 discrete pitch multipliers: 0.25x, 0.5x, 1x, 2x, 4x (no intermediate values)
-- Hermann-style envelope (quick attack, slow decay) for musical grain shapes
-- Minimum grain size of 5% buffer length to prevent pitch artifacts
-- Maximum 8 concurrent grains for optimal performance
+- Variable envelope shape: 0.0=slow attack/fast decay, 0.5=equal, 1.0=fast attack/slow decay
+- Fixed grain duration of 200ms, independent of looper length (prevents pitch artifacts)
+- Maximum 6 concurrent grains to prevent crackling at high spray amounts
 - Grains processed after looper, before oscillators in signal chain
 - Zero CPU overhead when spray amount = 0
 
 **Behavior:**
 - When SHIFT + Resonator Feedback = 0: Normal looper behavior (no granular processing)
 - As spray amount increases: More frequent grain triggers, wider position spread
-- Grain size independent of spray amount (controlled separately)
+- Envelope shape dramatically changes grain character from smooth swells to sharp attacks
 - Pitch set once at grain creation, never changes during grain lifetime
 - Dry/wet control allows subtle to full granular processing
