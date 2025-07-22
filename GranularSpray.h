@@ -232,8 +232,8 @@ public:
             
             // Trigger grains: spray amount controls density, but limit frequency to prevent crackling
             grainTimer_ += 1.0f;
-            // Balanced range: 50ms (dense) to 500ms intervals
-            float grainInterval = patchState_->sampleRate * (0.05f + (1.0f - sprayAmount) * 0.45f); // 50-500ms intervals
+            // Balanced range: 75ms (dense) to 500ms intervals
+            float grainInterval = patchState_->sampleRate * (0.075f + (1.0f - sprayAmount) * 0.45f); // 75-500ms intervals
             
             if (grainTimer_ >= grainInterval) {
                 TriggerGrain();

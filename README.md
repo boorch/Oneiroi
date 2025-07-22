@@ -167,9 +167,11 @@ A simple granular spray enhancement to the existing looper, preserving all origi
 
 **Technical Details:**
 - Exactly 5 discrete pitch multipliers: 0.25x, 0.5x, 1x, 2x, 4x (no intermediate values)
+- Pitch calculations use absolute looper speed values (works correctly in both forward and reverse playback)
 - Variable envelope shape: 0.0=slow attack/fast decay, 0.5=equal, 1.0=fast attack/slow decay
 - Fixed grain duration of 200ms, independent of looper length (prevents pitch artifacts)
-- Maximum 6 concurrent grains to prevent crackling at high spray amounts
+- Grain trigger intervals: 75ms (dense) to 500ms (sparse) based on spray amount
+- Maximum 8 concurrent grains to prevent crackling at high spray amounts
 - Grains processed after looper, before oscillators in signal chain
 - Zero CPU overhead when spray amount = 0
 
