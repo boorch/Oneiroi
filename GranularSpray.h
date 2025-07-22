@@ -67,6 +67,10 @@ private:
         // Get current looper varispeed (this is the base speed)
         float looperSpeed = patchCtrls_->looperSpeed; // 0.5 = half speed, 1.0 = normal, 2.0 = double speed
         
+        // Use ABSOLUTE value of looper speed for pitch calculations
+        // This ensures grains work correctly in both forward and reverse playback
+        float absoluteLooperSpeed = fabsf(looperSpeed);
+        
         // Always return exactly one of these 5 values: -2oct, -1oct, normal, +1oct, +2oct
         // But these are RELATIVE to the current looper speed (additive in octave space)
         
@@ -139,15 +143,16 @@ private:
                 cumulative += weights[i];
                 if (random <= cumulative) {
                     // Convert octave offset to pitch multiplier relative to looper speed
+                    // Use absolute looper speed to ensure positive pitch values
                     // If looper is at 2x and we want +1 octave grain, result should be 2x * 2^1 = 4x
                     float octaveOffset = octaveOffsets[i];
-                    float pitchMultiplier = looperSpeed * powf(2.0f, octaveOffset);
+                    float pitchMultiplier = absoluteLooperSpeed * powf(2.0f, octaveOffset);
                     return pitchMultiplier;
                 }
             }
         }
         
-        return looperSpeed; // Fallback to same speed as looper
+        return absoluteLooperSpeed; // Fallback to same speed as looper (absolute value)
     }
     
 public:
