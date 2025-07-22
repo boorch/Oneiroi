@@ -215,7 +215,7 @@ public:
             float mappedDrive = patchCtrls_->filterDrive * 0.005f;
             
             // Use proper amp gain like the filter (but reasonable level)
-            float ampGain = 500.f; // Good amp-style distortion level
+            float ampGain = 600.f; // Good amp-style distortion level
             
             for (size_t i = 0; i < size; i++)
             {
