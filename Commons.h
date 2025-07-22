@@ -45,7 +45,7 @@
 #define INPUT_LED_PARAM PARAMETER_AF
 #define MOD_LED_PARAM PARAMETER_AG
 
-constexpr float kEqualCrossFadeP = 1.f;
+constexpr float kEqualCrossFadeP = 1.4f;
 constexpr float kEps = 0.0001f; // Commodity for minimum float
 constexpr float kPi = 3.1415927410125732421875f;
 const float k2Pi = kPi * 2.0f;
@@ -74,7 +74,7 @@ constexpr float kOscFreqMax = 8219.f; // C9
 
 constexpr size_t kLooperInterpolationBlocks = 4; // This number * block size = samples
 constexpr int kLooperLoopLengthMin = 367; // Almost C3 (48000 / 130.81f)
-constexpr int kLooperFadeSamples = 24000; // 500ms @ audio rate
+constexpr int kLooperFadeSamples = 19200; // 400ms @ audio rate
 static const float kLooperFadeSamplesR = 1.f / kLooperFadeSamples;
 constexpr int kLooperTriggerFadeSamples = 240; // 5ms @ audio rate
 static const float kLooperTriggerFadeSamplesR = 1.f / kLooperTriggerFadeSamples;
