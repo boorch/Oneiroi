@@ -416,6 +416,18 @@ public:
     {
         return buffer_->GetBuffer();
     }
+    
+    float GetNormalizedPosition() {
+        return (start_ + phase_) / (float)kLooperChannelBufferLength;
+    }
+    
+    float GetNormalizedLength() {
+        return length_ / (float)kLooperChannelBufferLength;
+    }
+    
+    float GetNormalizedStart() {
+        return start_ / (float)kLooperChannelBufferLength;
+    }
 
     void Process(AudioBuffer &input, AudioBuffer &output)
     {

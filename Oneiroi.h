@@ -17,6 +17,7 @@
 #include "SmoothValue.h"
 #include "Modulation.h"
 #include "Limiter.h"
+#include "GranularSpray.h"
 
 class Oneiroi
 {
@@ -35,6 +36,7 @@ private:
     Ambience* ambience_;
     Looper* looper_;
     Limiter* limiter_;
+    GranularSpray* granularSpray_;
 
     Modulation* modulation_;
 
@@ -71,6 +73,8 @@ public:
 
         modulation_ = Modulation::create(patchCtrls_, patchCvs_, patchState_);
 
+        granularSpray_ = GranularSpray::create(patchCtrls_, patchState_);
+
         limiter_ = Limiter::create();
 
         input_ = AudioBuffer::create(2, patchState_->blockSize);
@@ -103,6 +107,7 @@ public:
         Echo::destroy(echo_);
         Ambience::destroy(ambience_);
         Modulation::destroy(modulation_);
+        GranularSpray::destroy(granularSpray_);
         Limiter::destroy(limiter_);
 
         for (size_t i = 0; i < 2; i++)
@@ -158,6 +163,16 @@ public:
         {
             looper_->Process(buffer, buffer);
         }
+        
+        // Apply granular spray effect to looper output
+        granularSpray_->SetLooperBuffer(
+            looper_->GetBuffer(),
+            looper_->GetNormalizedPosition(),
+            looper_->GetNormalizedLength(),
+            looper_->GetNormalizedStart()
+        );
+        granularSpray_->Process(buffer);
+        
         buffer.add(*input_);
 
         sine_->Process(*osc1Out_);

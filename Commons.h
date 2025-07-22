@@ -214,6 +214,10 @@ struct PatchCtrls
 
     float filterVol;
     float filterDrive;
+    
+    // Simple granular spray parameters
+    float granularSpray;    // SHIFT + resonatorFeedback
+    float granularPitch;    // SHIFT + looperSpeed
     float filterMode;
     float filterNoiseLevel;
     float filterCutoff;
@@ -257,6 +261,8 @@ struct PatchCtrls
 
     float randomMode;
     float randomAmount;
+    float granularGrainSize;    // SHIFT + echoRepeats  
+    float granularDryWet;       // SHIFT + looper fader
 };
 
 struct PatchCvs

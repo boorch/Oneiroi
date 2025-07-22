@@ -126,24 +126,56 @@ The distortion is designed to provide musical, amp-style saturation that enhance
 - Crossfade approach: LinearCrossFade() between clean and driven signals
 - Volume compensation: Carefully tuned to maintain consistent perceived loudness
 
-### Planned: Granular Synthesis Mode
+### Current SHIFT Control Mapping
 
-A complete granular synthesis engine is planned for addition, utilizing knobs that currently have no SHIFT functionality. This will provide Clouds-style granular processing using the looper buffer as the grain source.
+**Existing SHIFT Controls:**
+- **SHIFT + Filter Fader** → Independent Distortion Drive (0-0.5%)
+- **SHIFT + Looper Start** → SOS (Sound-on-Sound) Amount
+- **SHIFT + Looper Length** → Looper Filter
+- **SHIFT + Oscillator Pitch** → Octave Selection
+- **SHIFT + Oscillator Detune** → Unison Amount  
+- **SHIFT + Filter Cutoff** → Filter Mode Selection
+- **SHIFT + Filter Resonance** → Filter Position in Chain
+- **SHIFT + Resonator Tune** → Resonator Dissonance
+- **SHIFT + Echo Density** → Echo Filter
+- **SHIFT + Ambience Spacetime** → Ambience Auto-Pan
+- **SHIFT + Mod Speed** → Modulation Type
 
-**Proposed Control Mapping (SHIFT + knob for knobs without existing SHIFT functions):**
-- **SHIFT + LOOPER_SPEED** → Grain Pitch/Speed (-2 to +2 octaves)
-- **SHIFT + RESONATOR_FEEDBACK** → Grain Density (grain overlap and timing randomization)
-- **SHIFT + ECHO_REPEATS** → Grain Size (duration of individual grains)
-- **SHIFT + AMBIENCE_DECAY** → Grain Texture (envelope shape: triangle to Hann window)
-- **SHIFT + MOD_LEVEL** → Granular Dry/Wet Mix
+**Available for Granular (currently unused SHIFT functions):**
+- **SHIFT + Looper Speed** → Available
+- **SHIFT + Resonator Feedback** → Available  
+- **SHIFT + Echo Repeats** → Available
+- **SHIFT + Ambience Decay** → Available
+- **SHIFT + Mod Level** → Available (no SHIFT mode exists)
 
-**Grain Characteristics:**
-- **Max Grains:** 16 simultaneous grains (optimized for OWL platform performance)
-- **Envelope:** Symmetric triangular attack/decay (no sustain phase)
-- **Window Shaping:** Low texture = sharp triangular envelope, high texture = smooth Hann window
-- **Timing:** Low density = deterministic grain scheduling, high density = probabilistic/random timing
-- **Position:** Controlled by looper playback position and optional scatter at high texture values
+### Implemented: Simple Granular Spray Enhancement
 
-**Mode Toggle:** SHIFT + MOD_CV_BUTTON to enable/disable granular mode
-**Grain Source:** Uses existing looper buffer for granular material
-**Compatibility:** When granular mode is off, all controls function normally
+A simple granular spray enhancement to the existing looper, preserving all original functionality while adding subtle granular texture when desired.
+
+**Control Mapping:**
+- **SHIFT + Resonator Feedback** → Granular Spray Amount (controls grain density and position spread)
+- **SHIFT + Looper Speed** → Pitch Variation (gradual introduction of octave shifts around center)
+- **SHIFT + Echo Repeats** → Grain Size (5-30% of loop buffer length)
+- **SHIFT + Looper Volume** → Granular Dry/Wet Mix (0 = dry only, 1 = wet only)
+
+**Pitch Variation Details:**
+- **0.5** = Only normal pitch (no octave shifts)
+- **0.5→0.75** = Gradually introduce +1 octave (50% normal, 50% +1oct at 0.75)
+- **0.75→1.0** = Introduce +2 octave while maintaining 50% normal (at 1.0: 50% normal, 50% +2oct)
+- **0.5→0.25** = Gradually introduce -1 octave (50% normal, 50% -1oct at 0.25)
+- **0.25→0.0** = Introduce -2 octave while maintaining 50% normal (at 0.0: 50% normal, 50% -2oct)
+
+**Technical Details:**
+- Exactly 5 discrete pitch multipliers: 0.25x, 0.5x, 1x, 2x, 4x (no intermediate values)
+- Hermann-style envelope (quick attack, slow decay) for musical grain shapes
+- Minimum grain size of 5% buffer length to prevent pitch artifacts
+- Maximum 8 concurrent grains for optimal performance
+- Grains processed after looper, before oscillators in signal chain
+- Zero CPU overhead when spray amount = 0
+
+**Behavior:**
+- When SHIFT + Resonator Feedback = 0: Normal looper behavior (no granular processing)
+- As spray amount increases: More frequent grain triggers, wider position spread
+- Grain size independent of spray amount (controlled separately)
+- Pitch set once at grain creation, never changes during grain lifetime
+- Dry/wet control allows subtle to full granular processing

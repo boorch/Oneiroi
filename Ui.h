@@ -183,6 +183,12 @@ public:
         unison_ = 0.55f; // Center is not 0.5
         patchCtrls_->filterMode = 0.f;
         patchCtrls_->filterDrive = 0.f;
+        
+        // Initialize granular spray parameters
+        patchCtrls_->granularSpray = 0.f;
+        patchCtrls_->granularPitch = 0.5f; // Centered = no pitch variation
+        patchCtrls_->granularGrainSize = 0.5f; // Medium grain size
+        patchCtrls_->granularDryWet = 0.f; // Dry signal only initially
         patchCtrls_->filterPosition = 0.f;
         patchCtrls_->modType = 0.f;
         patchCtrls_->resonatorDissonance = 0.f;
@@ -219,7 +225,7 @@ public:
 
         faders_[PARAM_FADER_IN_VOL] = FaderController::create(patchState_, &inputVol_);
         faders_[PARAM_FADER_LOOPER_VOL] =
-            FaderController::create(patchState_, &looperVol_);
+            FaderController::create(patchState_, &looperVol_, &patchCtrls_->granularDryWet);
         faders_[PARAM_FADER_OSC1_VOL] =
             FaderController::create(patchState_, &osc1Vol_);
         faders_[PARAM_FADER_OSC2_VOL] =
@@ -234,7 +240,7 @@ public:
             FaderController::create(patchState_, &patchCtrls_->ambienceVol);
 
         knobs_[PARAM_KNOB_LOOPER_SPEED] = KnobController::create(patchState_,
-            &patchCtrls_->looperSpeed, NULL, &patchCtrls_->looperSpeedModAmount,
+            &patchCtrls_->looperSpeed, &patchCtrls_->granularPitch, &patchCtrls_->looperSpeedModAmount,
             &patchCtrls_->looperSpeedCvAmount, 0.005f);
         knobs_[PARAM_KNOB_LOOPER_START] =
             KnobController::create(patchState_, &patchCtrls_->looperStart,
@@ -266,7 +272,7 @@ public:
             &patchCtrls_->resonatorTuneCvAmount, 0.005f);
         knobs_[PARAM_KNOB_RESONATOR_FEEDBACK] =
             KnobController::create(patchState_, &patchCtrls_->resonatorFeedback,
-                NULL, &patchCtrls_->resonatorFeedbackModAmount,
+                &patchCtrls_->granularSpray, &patchCtrls_->resonatorFeedbackModAmount,
                 &patchCtrls_->resonatorFeedbackCvAmount);
 
         knobs_[PARAM_KNOB_ECHO_DENSITY] =
@@ -274,7 +280,7 @@ public:
                 &patchCtrls_->echoFilter, &patchCtrls_->echoDensityModAmount,
                 &patchCtrls_->echoDensityCvAmount, 0.005f);
         knobs_[PARAM_KNOB_ECHO_REPEATS] = KnobController::create(patchState_,
-            &patchCtrls_->echoRepeats, NULL, &patchCtrls_->echoRepeatsModAmount,
+            &patchCtrls_->echoRepeats, &patchCtrls_->granularGrainSize, &patchCtrls_->echoRepeatsModAmount,
             &patchCtrls_->echoRepeatsCvAmount);
 
         knobs_[PARAM_KNOB_AMBIENCE_SPACETIME] = KnobController::create(patchState_,
